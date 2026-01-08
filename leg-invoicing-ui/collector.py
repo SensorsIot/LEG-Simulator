@@ -132,13 +132,13 @@ class EnergyCollector:
             point = Point("house_energy") \
                 .tag("house_id", str(data['house_id'])) \
                 .tag("mac", mac) \
-                .field("delta_ei_kwh", delta_ei) \
-                .field("delta_eo_kwh", delta_eo) \
-                .field("net_flow_kwh", net_flow_home) \
-                .field("value_consumption_ct", value_consumption) \
-                .field("value_pv_delivery_ct", value_pv_delivery) \
-                .field("tariff_p_con", tariffs['p_con']) \
-                .field("tariff_p_pv", tariffs['p_pv'])
+                .field("delta_ei_kwh", float(delta_ei)) \
+                .field("delta_eo_kwh", float(delta_eo)) \
+                .field("net_flow_kwh", float(net_flow_home)) \
+                .field("value_consumption_ct", float(value_consumption)) \
+                .field("value_pv_delivery_ct", float(value_pv_delivery)) \
+                .field("tariff_p_con", float(tariffs['p_con'])) \
+                .field("tariff_p_pv", float(tariffs['p_pv']))
 
             points.append(point)
 
