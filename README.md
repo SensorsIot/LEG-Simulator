@@ -39,7 +39,6 @@ It answers the question: *"What is happening right now with energy in our commun
 | 🟢 Green | Energy export (surplus) |
 | 🟠 Orange | Energy import (deficit) |
 | ⚪ Grey | No significant flow |
-| **Thickness** | Proportional to power (W) |
 
 ---
 
@@ -79,9 +78,7 @@ Energy prices are configurable in the UI (ct/kWh):
 
 ## 🔮 Future Extensions
 
-- 🔋 Battery storage
 - 💰 Price signals
-- 🤖 Optimization layer
 
 ---
 
