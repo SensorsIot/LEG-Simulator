@@ -100,11 +100,20 @@ class EnergyCollector:
             delta_ei = max(0, ei - prev['Ei'])
             delta_eo = max(0, eo - prev['Eo'])
 
-            self.current_interval[mac] = {
-                'house_id': house_id,
-                'delta_ei': delta_ei,
-                'delta_eo': delta_eo,
-            }
+            # Accumulate deltas over the interval
+            if mac in self.current_interval:
+                self.current_interval[mac]['delta_ei'] += delta_ei
+                self.current_interval[mac]['delta_eo'] += delta_eo
+                self.current_interval[mac]['ei'] = ei  # Update to latest
+                self.current_interval[mac]['eo'] = eo
+            else:
+                self.current_interval[mac] = {
+                    'house_id': house_id,
+                    'delta_ei': delta_ei,
+                    'delta_eo': delta_eo,
+                    'ei': ei,  # Raw cumulative value
+                    'eo': eo,
+                }
 
         self.previous_values[mac] = {'Ei': ei, 'Eo': eo}
 
@@ -132,6 +141,8 @@ class EnergyCollector:
             point = Point("house_energy") \
                 .tag("house_id", str(data['house_id'])) \
                 .tag("mac", mac) \
+                .field("ei_kwh", float(data['ei'])) \
+                .field("eo_kwh", float(data['eo'])) \
                 .field("delta_ei_kwh", float(delta_ei)) \
                 .field("delta_eo_kwh", float(delta_eo)) \
                 .field("net_flow_kwh", float(net_flow_home)) \
