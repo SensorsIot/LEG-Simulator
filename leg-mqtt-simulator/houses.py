@@ -3,6 +3,7 @@
 import random
 import json
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -13,6 +14,12 @@ from config import (
     EV_CHARGER_KW, EV_CHARGE_KWH, EV_FREQUENCY_DAYS,
 )
 from solar import get_pv_production_kw
+
+
+def get_simulated_time() -> datetime:
+    """Get simulated time (6 months ahead, same day of month)."""
+    now = datetime.now()
+    return now + relativedelta(months=6)
 
 
 @dataclass
@@ -81,7 +88,7 @@ class House:
         self.ts = random.randint(1000, 100000)
         
         # Initialize appliances
-        now = datetime.now()
+        now = get_simulated_time()
         
         self.appliances = [
             ApplianceState(
@@ -149,7 +156,8 @@ class House:
         Returns:
             Dict matching smart meter JSON format
         """
-        now = datetime.now()
+        # Use simulated time (6 months ahead)
+        now = get_simulated_time()
         
         # Calculate current power flows
         base_load = self.get_base_load_kw(now)
