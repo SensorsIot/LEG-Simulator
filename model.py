@@ -1,6 +1,3 @@
-import math
-import random
-import time
 from dataclasses import dataclass
 
 
@@ -9,7 +6,8 @@ class HouseState:
     house_id: str
     pv_power_w: float
     base_load_w: float
-    flex_load_w: float
+    ev_load_w: float
+    washer_load_w: float
     net_power_w: float
 
 
@@ -26,50 +24,37 @@ class GridExchange:
     grid_export_w: float
 
 
-def _clamp(value: float, low: float, high: float) -> float:
-    return max(low, min(high, value))
-
-
 class EnergyModel:
-    def __init__(self, house_count: int, flex_load_probability: float) -> None:
+    # Fixed power draws
+    EV_POWER_W = 11000  # 11 kW EV charger
+    WASHER_POWER_W = 2000  # 2 kW washer
+
+    def __init__(self, house_count: int) -> None:
         self.house_count = house_count
-        self.flex_load_probability = flex_load_probability
-        self._rng = random.Random(42)
         self._houses = []
-        now = time.time()
         for idx in range(house_count):
-            base_load = self._rng.uniform(300, 700)
-            pv_peak = self._rng.uniform(1500, 4500)
-            phase = self._rng.uniform(0, math.tau)
             self._houses.append(
                 {
                     "house_id": f"house_{idx + 1}",
-                    "base_load_w": base_load,
-                    "pv_peak_w": pv_peak,
-                    "pv_phase": phase,
-                    "flex_load_w": 0.0,
-                    "last_flex_toggle": now,
-                    "flex_active": False,
+                    "base_load_w": 0,
+                    "pv_power_w": 0,
+                    "ev_on": False,
+                    "washer_on": False,
                 }
             )
 
-    def update(self, pv_variation_enabled: bool) -> tuple[list[HouseState], CommunityState, GridExchange]:
-        now = time.time()
+    def update(self) -> tuple[list[HouseState], CommunityState, GridExchange]:
         house_states: list[HouseState] = []
         total_prod = 0.0
         total_cons = 0.0
 
         for house in self._houses:
-            pv_power = house["pv_peak_w"]
-            if pv_variation_enabled:
-                pv_wave = (math.sin(now / 15.0 + house["pv_phase"]) + 1.0) / 2.0
-                pv_noise = self._rng.uniform(-0.08, 0.08)
-                pv_power *= _clamp(pv_wave + pv_noise, 0.0, 1.0)
-
+            pv_power = house["pv_power_w"]
             base_load = house["base_load_w"]
-            flex_load = self._update_flex_load(house, now)
+            ev_load = self.EV_POWER_W if house["ev_on"] else 0.0
+            washer_load = self.WASHER_POWER_W if house["washer_on"] else 0.0
 
-            total_load = base_load + flex_load
+            total_load = base_load + ev_load + washer_load
             net_power = pv_power - total_load
 
             total_prod += pv_power
@@ -80,7 +65,8 @@ class EnergyModel:
                     house_id=house["house_id"],
                     pv_power_w=round(pv_power, 1),
                     base_load_w=round(base_load, 1),
-                    flex_load_w=round(flex_load, 1),
+                    ev_load_w=round(ev_load, 1),
+                    washer_load_w=round(washer_load, 1),
                     net_power_w=round(net_power, 1),
                 )
             )
@@ -98,19 +84,3 @@ class EnergyModel:
         )
 
         return house_states, community_state, grid_exchange
-
-    def _update_flex_load(self, house: dict, now: float) -> float:
-        if now - house["last_flex_toggle"] > 3.0:
-            house["last_flex_toggle"] = now
-            if house["flex_active"]:
-                if self._rng.random() < 0.3:
-                    house["flex_active"] = False
-            else:
-                if self._rng.random() < self.flex_load_probability:
-                    house["flex_active"] = True
-                    house["flex_load_w"] = self._rng.uniform(1500, 7000)
-
-        if not house["flex_active"]:
-            return 0.0
-
-        return house["flex_load_w"]

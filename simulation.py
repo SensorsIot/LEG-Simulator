@@ -11,10 +11,9 @@ class SimulationSnapshot:
 
 
 class Simulation:
-    def __init__(self, house_count: int, flex_load_probability: float, pv_variation: bool) -> None:
-        self.pv_variation = pv_variation
-        self.model = EnergyModel(house_count, flex_load_probability)
+    def __init__(self, house_count: int) -> None:
+        self.model = EnergyModel(house_count)
 
     def tick(self) -> SimulationSnapshot:
-        houses, community, grid = self.model.update(self.pv_variation)
+        houses, community, grid = self.model.update()
         return SimulationSnapshot(houses=houses, community=community, grid=grid)

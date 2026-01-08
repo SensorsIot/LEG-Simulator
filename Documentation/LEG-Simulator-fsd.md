@@ -211,9 +211,7 @@ energy-flow-sim/
 
 ```yaml
 houses: 5
-update_interval_ms: 10000
-pv_variation: enabled
-flex_load_probability: 0.1
+update_interval_ms: 1000
 ```
 
 Configuration is read once at startup.
@@ -222,12 +220,37 @@ Configuration is read once at startup.
 
 ## 12. Load Modeling
 
-- PV generation: deterministic sinusoidal curve with added noise per house.
-- Base load: stochastic behavior per house (simple resample each tick).
-- Flex loads: per-house independent, multi-tick duration for EV charger and washer.
-- EV charger draw: 11 kW when on.
-- Washer draw: 2 kW when on.
-- EV and washer can run simultaneously per house.
+- All values start at 0 and are user-settable via click-to-edit
+- No random variation - values remain fixed until changed by user
+- PV generation: user-defined per house (click on PV icon)
+- Base load: user-defined per house (click on base load icon)
+- EV charger draw: 11 kW when enabled (click to toggle)
+- Washer draw: 2 kW when enabled (click to toggle)
+- EV and washer can run simultaneously per house
+
+---
+
+## 12.1 Energy Pricing
+
+User-configurable energy prices (ct/kWh):
+- Grid Delivery (sell to grid): default 6 ct/kWh
+- Grid Consumption (buy from grid): default 30 ct/kWh
+- PV Delivery (sell PV to community): default 20 ct/kWh
+- House Consumption (buy from community): default 25 ct/kWh
+
+---
+
+## 12.2 Pricing Table
+
+The pricing table shows costs (ct/h) with 7 columns:
+- **House Buy/Sell**: Net exchange between house and community
+- **Community Buy/Sell**: What community pays/earns from houses and grid
+- **Grid Buy/Sell**: External grid exchange (shown in Grid row and TOTAL)
+
+Row structure:
+- Individual house rows (House 1, House 2, ...)
+- Grid row (showing community-grid exchange)
+- TOTAL row (aggregated values)
 
 ---
 

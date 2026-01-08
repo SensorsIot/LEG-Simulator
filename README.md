@@ -25,11 +25,11 @@ It answers the question: *"What is happening right now with energy in our commun
      🔌 Load
 ```
 
-- 🏠 **Houses**: Each with solar panels and consumption
-- ☀️ **PV Production**: Simulated with realistic daily variation
-- 🔌 **Loads**: Base consumption + random flexible loads (EV, appliances)
-- 🔄 **Energy Flows**: Visualized in real-time with colored edges
-- 📊 **Grid Exchange**: Community surplus/deficit with external grid
+- 🏠 **Houses**: Each with solar panels and consumption (click to edit)
+- ☀️ **PV Production**: User-defined values per house
+- 🔌 **Loads**: Base load + EV (11kW) + Washer (2kW) - all clickable
+- 🔄 **Energy Flows**: Net flows visualized with colored arrows
+- 📊 **Pricing Table**: Buy/Sell costs for House, Community, Grid
 
 ## 🎨 Visual Indicators
 
@@ -61,8 +61,10 @@ Edit `config.yaml`:
 |-----------|-------------|---------|
 | `houses` | Number of houses | 5 |
 | `update_interval_ms` | Refresh rate (ms) | 1000 |
-| `pv_variation` | Solar variation | enabled |
-| `flex_load_probability` | Flex load chance | 0.1 |
+
+Energy prices are configurable in the UI (ct/kWh):
+- Grid Delivery: 6 | Grid Consumption: 30
+- PV Delivery: 20 | House Consumption: 25
 
 ## 📁 Files
 
