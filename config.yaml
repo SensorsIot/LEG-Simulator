@@ -1,0 +1,4 @@
+houses: 5
+update_interval_ms: 1000
+pv_variation: enabled
+flex_load_probability: 0.1

@@ -1,0 +1,4 @@
+dash>=2.15
+plotly>=5.18
+PyYAML>=6.0
+networkx>=3.2
