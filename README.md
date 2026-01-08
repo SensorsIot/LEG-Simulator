@@ -55,13 +55,6 @@ python app.py
 
 ## ⚙️ Configuration
 
-Edit `config.yaml`:
-
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `houses` | Number of houses | 5 |
-| `update_interval_ms` | Refresh rate (ms) | 1000 |
-
 Energy prices are configurable in the UI (ct/kWh):
 - Grid Delivery: 6 | Grid Consumption: 30
 - PV Delivery: 20 | House Consumption: 25
@@ -74,7 +67,6 @@ Energy prices are configurable in the UI (ct/kWh):
 | `model.py` | Energy model logic |
 | `simulation.py` | Simulation loop |
 | `layout.py` | Graph visualization |
-| `config.yaml` | Settings |
 
 ## 🔮 Future Extensions
 

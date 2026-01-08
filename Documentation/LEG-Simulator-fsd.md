@@ -27,7 +27,6 @@ an AI coding agent.
   - Energy exchange with an external grid / energy company
 - Headless deployment on a virtual machine
 - Browser-based visualization
-- CSV logging of simulation data for later analysis
 
 ### 2.2 Out of Scope
 - Forecasting (daily, weekly, or longer)
@@ -60,7 +59,7 @@ an AI coding agent.
 
 ## 4. Energy Flow Logic (Non-Optimizing)
 
-At every simulation tick:
+On each update:
 
 1. Each house reports:
    - Current PV production (W)
@@ -86,10 +85,8 @@ No decisions are made to shift loads or change behavior.
 
 ## 5. Time Model
 
-- Simulation operates in real time
-- Update interval: 10 seconds (configurable in config.yaml)
-- Each update represents “now”, not a future or averaged state
-- Configuration is loaded at simulation start from config.yaml (no runtime reload)
+- Simulation updates on user input (no periodic refresh)
+- Each update represents "now", not a future or averaged state
 
 ---
 
@@ -192,7 +189,6 @@ energy-flow-sim/
 ├── model.py            # Energy model and state update logic
 ├── simulation.py       # Real-time simulation loop
 ├── layout.py           # Dash layout and graph definition
-├── config.yaml         # Number of houses, update rate
 └── README.md
 ```
 
@@ -202,19 +198,15 @@ energy-flow-sim/
 
 - Dash server listens on configurable port (default: 8050)
 - Single-page application
-- Graph auto-refreshes based on simulation ticks
+- Graph updates on user input changes
 - Stateless frontend; all state held in Python backend
 
 ---
 
-## 11. Configuration Parameters
+## 11. Configuration
 
-```yaml
-houses: 5
-update_interval_ms: 1000
-```
-
-Configuration is read once at startup.
+- Number of houses: hardcoded to 5 in `app.py`
+- Energy prices: configurable via UI inputs
 
 ---
 
@@ -513,36 +505,17 @@ At p_con = 20.91 ct/kWh:
 
 ---
 
-## 13. Data Logging
-
-- Append simulation data to a CSV file for future analysis.
-- Logged values should include timestamp, per-house values, and community/grid totals.
-- Append cadence: every simulation tick.
-- Default log path: data/leg_simulator_log.csv.
-- Row format: one row per house per tick.
-
----
-
-## 14. Layout
-
-- Preferred layout: use networkx for node positioning when available.
-- Fallback: deterministic layout if networkx is unavailable.
-
----
-
-## 15. Extensibility Hooks
+## 13. Extensibility Hooks
 
 The design must allow later addition of:
-- Batteries
 - Price signals
-- Optimization layer
-- Control signals (e.g., “start EV charging now”)
+- Control signals (e.g., "start EV charging now")
 
 These must not be implemented in this version.
 
 ---
 
-## 16. Success Criteria
+## 14. Success Criteria
 
 - System runs on a headless VM
 - Accessible via browser
@@ -552,4 +525,3 @@ These must not be implemented in this version.
   - Who consumes
   - Where surplus or deficit goes
 - Interactive toggles affect house load and flows
-- CSV log grows over time without interrupting the UI

@@ -1,23 +1,10 @@
-from pathlib import Path
-
-import yaml
 from dash import Dash, dcc, html, callback_context, no_update
 from dash.dependencies import Input, Output, State
 
 from layout import build_graph
 from simulation import Simulation
 
-
-def load_config(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
-
-
-CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
-CONFIG = load_config(CONFIG_PATH)
-
-HOUSE_COUNT = int(CONFIG.get("houses", 5))
-UPDATE_INTERVAL_MS = int(CONFIG.get("update_interval_ms", 1000))
+HOUSE_COUNT = 5
 
 simulation = Simulation(HOUSE_COUNT)
 
@@ -94,7 +81,6 @@ app.layout = html.Div(
             dcc.Graph(id="energy-graph", config={"displayModeBar": False}),
         ]),
 
-        dcc.Interval(id="tick", interval=UPDATE_INTERVAL_MS, n_intervals=0),
         dcc.Store(id="edit-store", data={"house_idx": None, "device_type": None}),
     ],
     style={"maxWidth": "1600px", "margin": "0 auto", "fontFamily": "Arial, sans-serif", "padding": "20px"},
@@ -184,14 +170,13 @@ def apply_edit(apply_clicks, new_value, edit_store):
 
 @app.callback(
     [Output("energy-graph", "figure"), Output("pricing-table", "children"), Output("breakeven-indicator", "children")],
-    [Input("tick", "n_intervals"),
-     Input("price-grid-delivery", "value"),
+    [Input("price-grid-delivery", "value"),
      Input("price-grid-consumption", "value"),
      Input("price-pv-delivery", "value"),
      Input("price-house-consumption", "value"),
      Input("modal-apply", "n_clicks")],
 )
-def update_graph(n_intervals, price_grid_del, price_grid_con, price_pv_del, price_house_con, apply_clicks):
+def update_graph(price_grid_del, price_grid_con, price_pv_del, price_house_con, apply_clicks):
     """Update graph and pricing table."""
     snapshot = simulation.tick()
     fig = build_graph(snapshot)
@@ -228,7 +213,7 @@ def update_graph(n_intervals, price_grid_del, price_grid_con, price_pv_del, pric
 
     # Build pricing table with 7 columns: Title, House Buy/Sell, Community Buy/Sell, Grid Buy/Sell
     # Logic: House sells to Community (same kWh), Community sells to Grid (same kWh)
-    # Use optimal_p_con for break-even calculations
+    # Build pricing table using user's price settings
     table_rows = []
     totals = {"house_buy": 0, "house_sell": 0, "comm_buy": 0, "comm_sell": 0}
 
