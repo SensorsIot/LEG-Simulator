@@ -140,8 +140,8 @@ LEG-Invoicing receives energy metering data from smart meters via MQTT. One real
 |-------|-------------|------|
 | Pi | Instantaneous power IN (consumption) | kW |
 | Po | Instantaneous power OUT (PV export) | kW |
-| Ei | Cumulative energy IN (total consumed) | kWh |
-| Eo | Cumulative energy OUT (total exported) | kWh |
+| Ei | Cumulative energy IN (ever-increasing total) | kWh |
+| Eo | Cumulative energy OUT (ever-increasing total) | kWh |
 | ts | Timestamp (incrementing seconds) | s |
 
 **Invoice Calculation:** Uses delta between consecutive `Ei`/`Eo` values over the settlement period.
