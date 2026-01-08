@@ -1,77 +1,29 @@
-# ⚡ LEG-Simulator
+# LEG-Software
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python&logoColor=white)](https://python.org)
-[![Dash](https://img.shields.io/badge/Dash-2.15+-00d4aa?logo=plotly&logoColor=white)](https://dash.plotly.com)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-brightgreen)]()
+Local Energy Grid software suite for community energy management.
 
-## 🎯 Purpose
+## Projects
 
-LEG-Simulator provides **real-time visualization of electrical energy flows** within a Local Energy Grid (LEG) - a small community of houses with photovoltaic (PV) systems.
+| Project | Description | Port |
+|---------|-------------|------|
+| [leg-simulator](leg-simulator/) | Real-time energy flow visualization | 8051 |
+| [invoicing](invoicing/) | Energy billing and invoicing | TBD |
 
-It answers the question: *"What is happening right now with energy in our community?"*
+## Deployment
 
-> ⚠️ This is a **descriptive simulator**, not an optimizer. It shows current state, not recommendations.
+**Server:** https://provision.dhamstack.com
 
-## ✨ What You See
+| Service | URL |
+|---------|-----|
+| LEG-Simulator | https://provision.dhamstack.com:8051 |
+| Invoicing | Coming soon |
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   House 1   │────▶│  Community  │────▶│  External   │
-│   House 2   │────▶│     Bus     │◀────│    Grid     │
-│   House N   │────▶│             │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘
-     ☀️ PV              ⚡ Balance           🔌 Import/Export
-     🔌 Load
-```
+## Documentation
 
-- 🏠 **Houses**: Each with solar panels and consumption (click to edit)
-- ☀️ **PV Production**: User-defined values per house
-- 🔌 **Loads**: Base load (random 0.5-2kW initial) + EV + Washer - all click-to-edit
-- 🔄 **Energy Flows**: Net flows visualized with colored arrows
-- 📊 **Pricing Table**: Buy/Sell costs for House, Community, Grid
-- 📈 **Break-Even**: Calculates optimal house consumption price for community profit = 0
+See [docs/](docs/) for functional specifications:
+- [LEG-Simulator FSD](docs/LEG-Simulator-fsd.md)
+- [Invoicing FSD](docs/Invoicing-fsd.md) *(coming soon)*
 
-## 🎨 Visual Indicators
+## License
 
-| Color | Meaning |
-|-------|---------|
-| 🟢 Green | Energy export (surplus) |
-| 🟠 Orange | Energy import (deficit) |
-| ⚪ Grey | No significant flow |
-
----
-
-## 🚀 Quick Start
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
-```
-
-🌐 Open http://localhost:8050
-
-## ⚙️ Configuration
-
-Energy prices are configurable in the UI (ct/kWh):
-- Grid Delivery: 6 | Grid Consumption: 30
-- PV Delivery: 20 | House Consumption: 25
-
-## 📁 Files
-
-| File | Purpose |
-|------|---------|
-| `app.py` | Dash entry point |
-| `model.py` | Energy model logic |
-| `simulation.py` | Simulation loop |
-| `layout.py` | Graph visualization |
-
-## 🔮 Future Extensions
-
-- 💰 Price signals
-
----
-
-<p align="center">Made with ⚡ for the energy community</p>
+MIT
