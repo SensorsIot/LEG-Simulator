@@ -1,0 +1,63 @@
+# LEG MQTT Simulator Configuration Example
+# Copy to config.yaml and fill in your values
+
+mqtt:
+  broker: "provision.dhamstack.com"
+  port: 8883
+  use_tls: true
+  username: "your_mqtt_username"
+  password: "your_mqtt_password"
+
+simulator:
+  update_interval: 10  # seconds
+  state_file: "state.json"
+
+houses:
+  - id: 2
+    mac: "AA-11-BB-22-CC-01"
+    smid: "SIM00002"
+    pv_kwp: 10.0
+    has_ev: true
+    ev_schedule: "day"
+
+  - id: 3
+    mac: "AA-11-BB-22-CC-02"
+    smid: "SIM00003"
+    pv_kwp: 20.0
+    has_ev: true
+    ev_schedule: "night"
+
+  - id: 4
+    mac: "AA-11-BB-22-CC-03"
+    smid: "SIM00004"
+    pv_kwp: 0.0
+    has_ev: false
+    ev_schedule: null
+
+  - id: 5
+    mac: "AA-11-BB-22-CC-04"
+    smid: "SIM00005"
+    pv_kwp: 0.0
+    has_ev: false
+    ev_schedule: null
+
+load:
+  base_day_w: 500
+  base_night_w: 200
+  variation: 0.2
+
+appliances:
+  washing_machine:
+    power_kw: 2.0
+    duration_hours: 2.0
+    frequency_days: 7
+
+  dishwasher:
+    power_kw: 1.5
+    duration_hours: 1.5
+    frequency_days: 2
+
+  ev_charger:
+    power_kw: 11.0
+    charge_kwh: 50.0
+    frequency_days: 3.5

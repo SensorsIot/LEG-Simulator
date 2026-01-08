@@ -9,13 +9,35 @@ import json
 import time
 import signal
 import sys
+import ssl
+import os
 import logging
 from datetime import datetime
 
+import yaml
 import paho.mqtt.client as mqtt
 
-from config import MQTT_BROKER, MQTT_PORT, UPDATE_INTERVAL, HOUSES, STATE_FILE
 from houses import House
+
+# Load configuration from YAML
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.yaml')
+with open(CONFIG_FILE, 'r') as f:
+    config = yaml.safe_load(f)
+
+# Extract config values
+MQTT_BROKER = config['mqtt']['broker']
+MQTT_PORT = config['mqtt']['port']
+MQTT_USE_TLS = config['mqtt'].get('use_tls', False)
+MQTT_USERNAME = config['mqtt'].get('username', '')
+MQTT_PASSWORD = config['mqtt'].get('password', '')
+
+UPDATE_INTERVAL = config['simulator']['update_interval']
+STATE_FILE = os.path.join(os.path.dirname(__file__), config['simulator']['state_file'])
+HOUSES = config['houses']
+
+# Load parameters
+LOAD_CONFIG = config.get('load', {})
+APPLIANCE_CONFIG = config.get('appliances', {})
 
 # Configure logging
 logging.basicConfig(
@@ -104,7 +126,18 @@ def main():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
-    
+
+    # Configure TLS if enabled
+    if MQTT_USE_TLS:
+        client.tls_set(cert_reqs=ssl.CERT_NONE)
+        client.tls_insecure_set(True)
+        logger.info("TLS enabled for MQTT connection")
+
+    # Configure authentication if provided
+    if MQTT_USERNAME and MQTT_PASSWORD:
+        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+        logger.info(f"MQTT authentication configured for user: {MQTT_USERNAME}")
+
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         client.loop_start()

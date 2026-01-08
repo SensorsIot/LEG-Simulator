@@ -1,5 +1,6 @@
 """House simulation with load profiles and energy metering."""
 
+import os
 import random
 import json
 from datetime import datetime, timedelta
@@ -7,13 +8,37 @@ from dateutil.relativedelta import relativedelta
 from dataclasses import dataclass, field
 from typing import Optional
 
-from config import (
-    BASE_LOAD_DAY_W, BASE_LOAD_NIGHT_W, BASE_LOAD_VARIATION,
-    WASHING_MACHINE_KW, WASHING_MACHINE_HOURS, WASHING_FREQUENCY_DAYS,
-    DISHWASHER_KW, DISHWASHER_HOURS, DISHWASHER_FREQUENCY_DAYS,
-    EV_CHARGER_KW, EV_CHARGE_KWH, EV_FREQUENCY_DAYS,
-)
+import yaml
+
 from solar import get_pv_production_kw
+
+# Load configuration from YAML
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.yaml')
+with open(CONFIG_FILE, 'r') as f:
+    _config = yaml.safe_load(f)
+
+# Extract load parameters
+_load = _config.get('load', {})
+BASE_LOAD_DAY_W = _load.get('base_day_w', 500)
+BASE_LOAD_NIGHT_W = _load.get('base_night_w', 200)
+BASE_LOAD_VARIATION = _load.get('variation', 0.2)
+
+# Extract appliance parameters
+_appliances = _config.get('appliances', {})
+_washing = _appliances.get('washing_machine', {})
+WASHING_MACHINE_KW = _washing.get('power_kw', 2.0)
+WASHING_MACHINE_HOURS = _washing.get('duration_hours', 2.0)
+WASHING_FREQUENCY_DAYS = _washing.get('frequency_days', 7)
+
+_dishwasher = _appliances.get('dishwasher', {})
+DISHWASHER_KW = _dishwasher.get('power_kw', 1.5)
+DISHWASHER_HOURS = _dishwasher.get('duration_hours', 1.5)
+DISHWASHER_FREQUENCY_DAYS = _dishwasher.get('frequency_days', 2)
+
+_ev = _appliances.get('ev_charger', {})
+EV_CHARGER_KW = _ev.get('power_kw', 11.0)
+EV_CHARGE_KWH = _ev.get('charge_kwh', 50.0)
+EV_FREQUENCY_DAYS = _ev.get('frequency_days', 3.5)
 
 
 def get_simulated_time() -> datetime:
