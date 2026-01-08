@@ -196,6 +196,7 @@ class House:
             "Q7": round(random.uniform(1000, 2000), 3),
             "Q8": round(random.uniform(3000, 4000), 3),
             "ts": self.ts,
+            "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
     
     def get_state(self) -> dict:
@@ -204,6 +205,7 @@ class House:
             "ei": self.ei,
             "eo": self.eo,
             "ts": self.ts,
+            "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
     
     def load_state(self, state: dict):
