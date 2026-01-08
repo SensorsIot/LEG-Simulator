@@ -7,7 +7,7 @@ Local Energy Grid software suite for community energy management.
 | Project | Description | Port |
 |---------|-------------|------|
 | [leg-simulator](leg-simulator/) | Real-time energy flow visualization | 8051 |
-| [invoicing](invoicing/) | Energy billing and invoicing | TBD |
+| [leg-invoicing](leg-invoicing/) | Energy billing and leg-invoicing | TBD |
 
 ## Deployment
 
