@@ -18,6 +18,7 @@ import yaml
 import paho.mqtt.client as mqtt
 
 from houses import House
+from influx_state import StateWriter
 
 # Load configuration from YAML
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.yaml')
@@ -122,6 +123,14 @@ def main():
             logger.info(f"House {config['id']}: Starting fresh Ei={house.ei:.3f}, Eo={house.eo:.3f}")
         houses.append(house)
     
+    # Initialize InfluxDB state writer
+    state_writer = StateWriter()
+    
+    # Write initial state at startup
+    for house in houses:
+        state_writer.write_state(house, force=True)
+    logger.info("Initial simulator state written to InfluxDB")
+    
     # Setup MQTT client
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
@@ -167,6 +176,9 @@ def main():
                     logger.debug(f"Published to {topic}: Pi={payload['Pi']:.3f}, Po={payload['Po']:.3f}")
                 else:
                     logger.error(f"Failed to publish to {topic}: {result.rc}")
+                
+                # Write state to InfluxDB if changed
+                state_writer.write_state(house)
             
             # Log summary periodically
             now = datetime.now()
@@ -192,6 +204,7 @@ def main():
         # Save state on exit
         logger.info("Saving state before exit...")
         save_state(houses)
+        state_writer.close()
         client.loop_stop()
         client.disconnect()
         logger.info("Simulator stopped")

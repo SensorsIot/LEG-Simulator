@@ -54,3 +54,4 @@ data/
 Thumbs.db
 leg-mqtt-simulator/state.json
 leg-mqtt-simulator/.venv/
+secrets.txt

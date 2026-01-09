@@ -590,7 +590,7 @@ Start the application:
 ```bash
 cd /root/LEG-Simulator
 source .venv/bin/activate
-nohup python app.py > /var/log/leg-simulator.log 2>&1 &
+systemctl start leg-simulator
 ```
 
 Update from GitHub:
@@ -600,7 +600,7 @@ git pull
 # Restart the application
 pkill -f "python app.py"
 source .venv/bin/activate
-nohup python app.py > /var/log/leg-simulator.log 2>&1 &
+systemctl start leg-simulator
 ```
 
 ### 15.5 Co-located Services
@@ -613,3 +613,47 @@ The same server hosts the Smartmeter Provisioning service:
 | Smartmeter Provisioning | https://provision.dhamstack.com:5000 |
 
 Both services share the same Let's Encrypt certificate.
+
+---
+
+## 16. Systemd Service
+
+### 16.1 Service Configuration
+
+The LEG-Simulator runs as a systemd service with auto-restart.
+
+**Service file:** `/etc/systemd/system/leg-simulator.service`
+
+```ini
+[Unit]
+Description=LEG Energy Simulator (Dash Visualization)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/LEG-Software/leg-simulator
+ExecStart=/root/LEG-Software/leg-simulator/.venv/bin/python app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 16.2 Service Management
+
+```bash
+# Check status
+systemctl status leg-simulator
+
+# Start/Stop/Restart
+systemctl start leg-simulator
+systemctl stop leg-simulator
+systemctl restart leg-simulator
+
+# View logs
+journalctl -u leg-simulator -f
+
+# Enable on boot
+systemctl enable leg-simulator
+```

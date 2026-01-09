@@ -169,100 +169,75 @@ Generates realistic smart meter data for 4 simulated houses to complement the re
 - **Interval:** 10 seconds
 - **Topic:** `{MAC}/SENSOR` per house
 
-### 9.3 Load Profiles
+### 9.3 Simulated Components
 
-#### 9.3.1 Base Load
-| Time | Power |
-|------|-------|
-| 06:00 - 22:00 | 500W ± random variation |
-| 22:00 - 06:00 | 200W ± random variation |
+| Component | Details |
+|-----------|---------|
+| Base load | 500W day / 200W night (±20% random variation) |
+| PV production | Based on Swiss solar irradiance data for Basel, scaled by kWp |
+| Washing machine | 2 kW × 2 hours, once per week |
+| Dishwasher | 1.5 kW × 1.5 hours, every 2 days |
+| EV charger | 11 kW × ~4.5 hours (50 kWh), twice per week |
 
-#### 9.3.2 Appliances
+### 9.4 House Configuration
 
-| Appliance | Power | Duration | Frequency |
-|-----------|-------|----------|-----------|
-| Washing Machine | 2 kW | 2 hours | 1× per week per house |
-| Dishwasher | 1.5 kW | 1.5 hours | Every 2 days per house |
-| EV Charger | 11 kW | ~4.5 hours (50 kWh) | 2× per week (House 2: day, House 3: night) |
+| House | PV | EV |
+|-------|-----|-----|
+| 2 | 10 kWp | Day charging (10:00-15:00) |
+| 3 | 20 kWp | Night charging (22:00-03:00) |
+| 4 | None | None |
+| 5 | None | None |
 
-#### 9.3.3 PV Production
+### 9.5 Time Simulation
 
-- **Data Source:** Swiss solar irradiance data for Basel, July
-- **Peak Hours:** ~06:00 - 20:00, maximum ~11:00 - 15:00
-- **Scaling:** Proportional to system size (10 kWp or 20 kWp)
-- **Cloud Variation:** Random ±20% fluctuation
+The simulator operates with a **6-month time offset** to enable realistic summer PV production testing:
 
-### 9.4 Energy Accumulator Logic
+| Real Time | Simulated Time |
+|-----------|----------------|
+| January | July |
+| February | August |
+
+This ensures full PV production curves during winter testing.
+
+### 9.6 Energy Accumulator Logic
 
 The simulator maintains cumulative `Ei` and `Eo` counters per house:
 
 ```python
 # Every 10 seconds:
-energy_delta = power_kw * (10 / 3600)  # kWh per 10s interval
-
 net_power = base_load + appliances - pv_production
 
 if net_power > 0:
-    Ei += net_power * (10 / 3600)  # Importing
+    Ei += net_power * (10 / 3600)  # Importing (kWh)
 else:
-    Eo += abs(net_power) * (10 / 3600)  # Exporting
+    Eo += abs(net_power) * (10 / 3600)  # Exporting (kWh)
 ```
 
-### 9.5 Deployment
+### 9.8 State Storage (InfluxDB)
+
+The simulator writes appliance state directly to InfluxDB at startup and on every change.
+
+**Measurement:** `simulator_state`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| pv_kwp | float | PV system size |
+| has_ev | int | 1 if house has EV, 0 otherwise |
+| washing_active | int | 1 if washing machine running |
+| dishwasher_active | int | 1 if dishwasher running |
+| ev_active | int | 1 if EV charging |
+
+**Tag:** house_id
+
+
+### 9.7 Deployment
 
 | Parameter | Value |
 |-----------|-------|
 | Location | /root/LEG-Software/leg-mqtt-simulator/ |
-| Broker | localhost:1883 (10.0.0.1) |
-| Service | systemd or nohup |
+| Broker | 10.0.0.1:1883 |
+| Service | leg-mqtt-simulator.service |
 
-### 9.6 House Simulation Summary
-
-```
-House 2 (10 kWp PV, EV day):
-├── Base: 500W day / 200W night
-├── PV: 0-10kW (peak ~12:00)
-├── EV: 11kW × 4.5h, 2×/week, 10:00-15:00
-├── Dishwasher: 1.5kW × 1.5h, every 2 days
-└── Washing: 2kW × 2h, 1×/week
-
-House 3 (20 kWp PV, EV night):
-├── Base: 500W day / 200W night
-├── PV: 0-20kW (peak ~12:00)
-├── EV: 11kW × 4.5h, 2×/week, 22:00-03:00
-├── Dishwasher: 1.5kW × 1.5h, every 2 days
-└── Washing: 2kW × 2h, 1×/week
-
-House 4 (No PV, No EV):
-├── Base: 500W day / 200W night
-├── Dishwasher: 1.5kW × 1.5h, every 2 days
-└── Washing: 2kW × 2h, 1×/week
-
-House 5 (No PV, No EV):
-├── Base: 500W day / 200W night
-├── Dishwasher: 1.5kW × 1.5h, every 2 days
-└── Washing: 2kW × 2h, 1×/week
-```
-
-### 9.7 Time Simulation
-
-The simulator operates with a **6-month time offset** to enable realistic summer PV production testing:
-
-```
-Real time:      January 8, 14:30
-Simulated time: July 8, 14:30
-```
-
-This ensures:
-- Full PV production curves during winter testing
-- Accurate summer load patterns
-- Realistic energy export scenarios
-
-**Implementation:**
-```python
-from dateutil.relativedelta import relativedelta
-simulated_time = datetime.now() + relativedelta(months=6)
-```
 
 ---
 
@@ -358,7 +333,7 @@ tariffs:
   p_grid_con: 30.0
 
 collector:
-  interval: 10
+  interval: 60
 
 web:
   host: "0.0.0.0"
@@ -443,3 +418,260 @@ Web interface for managing energy tariffs used in invoice calculations.
 - Flask (Python web framework)
 - HTML/CSS/JavaScript frontend
 - tariffs.json (persistent storage)
+
+---
+
+## 14. Grafana Dashboards
+
+### 14.1 Overview
+
+Energy data is visualized through Grafana dashboards accessible at http://192.168.0.203:3000
+
+### 14.2 Dashboards
+
+| Dashboard | UID | Description |
+|-----------|-----|-------------|
+| LEG Community | leg-community | Aggregated community energy and value flows, price signal |
+| LEG Grid | leg-grid | Grid import/export energy and value flows |
+| LEG House 1-5 | leg-house-{1-5} | Per-house energy and value flows |
+
+### 14.3 Dashboard Panels
+
+**Community Dashboard:**
+- Energy Flow (kWh) - Total consumption (negative), total production
+- Value Flow (ct) - Consumption cost (negative), PV delivery credit
+- Price Signal (ct/kWh) - Calculated house consumption tariff (p_consumption)
+
+**Grid Dashboard:**
+- Energy Flow (kWh) - Grid import (negative), grid export
+- Value Flow (ct) - Grid import cost (negative), grid export revenue
+
+**House Dashboards:**
+- Energy Flow (kWh) - Consumption (negative), production, net flow
+- Value Flow (ct) - Consumption cost (negative), PV delivery credit
+
+### 14.4 Grafana Access
+
+| Parameter | Value |
+|-----------|-------|
+| URL | http://192.168.0.203:3000 |
+| Username | admin |
+| Datasource | InfluxDB (uid: af9l1jbyffri8c) |
+
+---
+
+## 15. Systemd Services
+
+### 15.1 Service Overview
+
+All components run as systemd services with auto-restart on failure.
+
+| Service | Description | Working Directory |
+|---------|-------------|-------------------|
+| leg-mqtt-simulator | MQTT data generator | /root/LEG-Software/leg-mqtt-simulator |
+| leg-collector | Data aggregation to InfluxDB | /root/LEG-Software/leg-invoicing-ui |
+| leg-invoicing-ui | Tariff management UI | /root/LEG-Software/leg-invoicing-ui |
+| leg-simulator | Energy visualization | /root/LEG-Software/leg-simulator |
+
+### 15.2 Service Management
+
+```bash
+# Check all services
+systemctl status leg-mqtt-simulator leg-collector leg-invoicing-ui leg-simulator
+
+# Restart a service
+systemctl restart leg-collector
+
+# View logs
+journalctl -u leg-collector -f
+
+# Enable on boot
+systemctl enable leg-mqtt-simulator leg-collector leg-invoicing-ui leg-simulator
+```
+
+### 15.3 Service Files
+
+Location: `/etc/systemd/system/`
+
+**leg-collector.service:**
+```ini
+[Unit]
+Description=LEG Energy Collector
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/LEG-Software/leg-invoicing-ui
+ExecStart=/usr/bin/python3 collector.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 15.4 Data Collection Interval
+
+The collector aggregates MQTT messages and stores to InfluxDB every **60 seconds**.
+
+### 12.3.9 Surplus Edge Case: Capped House Price with Adjusted PV Tariff
+
+In surplus periods (E > I), the standard break-even formula may yield a house consumption price exceeding the grid import price, which is economically undesirable. In this case, we cap the house price and instead adjust the PV tariff to achieve break-even.
+
+#### Problem
+
+When E >> I (large surplus), the break-even p_con can exceed p_grid_con, making community energy more expensive than grid energy for consumers.
+
+#### Solution
+
+**Step 1:** Cap house consumption tariff to grid import price:
+```
+p_con := min(p_con_policy, p_grid_con)
+```
+
+**Step 2:** Compute PV tariff that yields community profit = 0:
+```
+p_pv_BE = [I × p_con + (E - I) × p_grid_del] / E
+```
+
+**Step 3:** Apply PV tariff (cap to policy maximum):
+```
+p_pv := min(p_pv_policy, p_pv_BE)
+```
+
+#### Intuition
+
+In surplus periods, the communitys PV payout must equal the average revenue per PV kWh, which is a blend of:
+
+#### Problem
+
+When E >> I (large surplus), the break-even p_con can exceed p_grid_con, making community energy more expensive than grid energy for consumers.
+
+#### Solution
+
+**Step 1:** Cap house consumption tariff to grid import price:
+
+    p_con := min(p_con_policy, p_grid_con)
+
+**Step 2:** Compute PV tariff that yields community profit = 0:
+
+    p_pv_BE = [I * p_con + (E - I) * p_grid_del] / E
+
+**Step 3:** Apply PV tariff (cap to policy maximum):
+
+    p_pv := min(p_pv_policy, p_pv_BE)
+
+#### Intuition
+
+In surplus periods, the community PV payout must equal the average revenue per PV kWh, which is a blend of:
+
+* Internal revenue from the I kWh sold to houses at p_con
+* Grid-export revenue for the (E - I) kWh at p_grid_del
+
+That average is exactly:
+
+    p_pv_BE = [I * p_con + (E - I) * p_grid_del] / E
+
+#### Worked Example
+
+Given: E = 100 kWh, I = 20 kWh, p_grid_con = 30 ct/kWh, p_grid_del = 6 ct/kWh, p_pv_policy = 20 ct/kWh
+
+**Standard formula would give:**
+
+    p_con = p_grid_del + (E/I) * (p_pv - p_grid_del)
+          = 6 + (100/20) * (20 - 6)
+          = 6 + 5 * 14 = 76 ct/kWh  <-- exceeds grid price!
+
+**With capped house price:**
+
+    p_con = min(76, 30) = 30 ct/kWh
+
+    p_pv_BE = [20 * 30 + 80 * 6] / 100
+            = [600 + 480] / 100
+            = 10.8 ct/kWh
+
+    p_pv = min(20, 10.8) = 10.8 ct/kWh
+
+**Verification:**
+
+* Community buys from houses: 100 * 10.8 = 1080 ct
+* Community sells to houses: 20 * 30 = 600 ct
+* Community sells to grid: 80 * 6 = 480 ct
+* Total revenue: 600 + 480 = 1080 ct
+* Profit = 0 (verified)
+
+#### Algorithm Update
+
+    1. Compute E and I from metering
+    2. If I == 0: declare infeasible (or apply fallback)
+    3. If E >= I (surplus):
+       a. p_con_calc = p_grid_del + (E/I) * (p_pv_policy - p_grid_del)
+       b. If p_con_calc > p_grid_con:
+          - p_con = p_grid_con
+          - p_pv = [I * p_con + (E - I) * p_grid_del] / E
+       c. Else:
+          - p_con = p_con_calc
+          - p_pv = p_pv_policy
+    4. Else (deficit):
+       - p_con = p_grid_con + (E/I) * (p_pv_policy - p_grid_con)
+       - p_pv = p_pv_policy
+
+---
+
+## 16. Layman Summary: How House Tariffs Work
+
+### The Community Energy Market
+
+Think of the community as a small energy market where:
+- **Houses with solar panels** sell their excess electricity
+- **Houses without solar** (or using more than they produce) buy electricity
+- **The community** acts as the middleman, balancing supply and demand
+
+### The Goal: Break-Even Pricing
+
+The community does not aim to make profit. Instead, it sets prices so that:
+- Money paid by consumers = Money paid to PV producers
+
+### Two Scenarios
+
+**Scenario 1: Sunny Day (More Solar Than Needed)**
+
+When the community produces more solar than it consumes:
+- Extra energy is sold to the external grid (at a low price, ~6 ct/kWh)
+- To break even, PV producers receive less than if all energy was used internally
+- House purchase price stays reasonable (capped at grid price of 30 ct/kWh)
+
+*Example: If the community produces 100 kWh but only uses 20 kWh, the PV producers get a blend of: the good internal price for 20 kWh + the low grid price for 80 kWh.*
+
+**Scenario 2: Cloudy Day (Need Grid Power)**
+
+When the community needs more energy than solar provides:
+- Extra energy is bought from the grid (at a high price, ~30 ct/kWh)
+- House purchase price is adjusted between PV price and grid price
+- More solar in the mix = lower house price
+
+*Example: If houses need 100 kWh but solar only provides 50 kWh, the house price is a blend based on the 50/50 mix.*
+
+### The Simple Rule
+
+**House purchase price** is always between:
+- The PV producer price (what we pay solar owners)
+- The grid price (what we pay the utility company)
+
+The exact price depends on how much of the energy comes from local solar vs. the grid.
+
+### Why Cap the House Price?
+
+In extreme surplus (lots of sun, little demand), the math could produce a house price higher than the grid price - which makes no sense. Nobody would pay more than the grid charges!
+
+So we cap the house price at the grid price, and instead reduce what we pay PV producers. They still earn more than selling directly to the grid, but not as much as on a balanced day.
+
+### Summary Formula
+
+| Situation | House Price | PV Payout |
+|-----------|-------------|-----------|
+| Deficit (need grid) | Blend toward grid price | Policy rate (e.g., 20 ct) |
+| Surplus (excess PV) | Blend toward PV price | Policy rate (e.g., 20 ct) |
+| Extreme surplus | Capped at grid price | Reduced to break even |
+
+**In plain English:** The more local solar you use, the cheaper your electricity. But we never charge more than the grid, and PV owners always earn more than grid export rates.

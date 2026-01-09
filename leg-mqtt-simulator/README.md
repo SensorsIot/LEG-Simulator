@@ -23,16 +23,25 @@ python simulator.py
 
 ## MQTT
 
-- Broker: 10.0.0.1:1883
+- Broker: 10.0.0.1:1883 (VPN) or provision.dhamstack.com:8883 (TLS)
 - Topic: `{MAC}/SENSOR`
 - Interval: 10 seconds
+
+## Systemd Service
+
+```bash
+# Status
+systemctl status leg-mqtt-simulator
+
+# Logs
+journalctl -u leg-mqtt-simulator -f
+
+# Restart
+systemctl restart leg-mqtt-simulator
+```
+
+Service file: `/etc/systemd/system/leg-mqtt-simulator.service`
 
 ## State Persistence
 
 Energy counters (Ei, Eo) persist in `state.json` to survive restarts.
-
-## Logs
-
-```bash
-tail -f /var/log/leg-simulator-mqtt.log
-```
